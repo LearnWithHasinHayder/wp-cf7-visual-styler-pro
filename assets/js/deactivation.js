@@ -308,11 +308,11 @@ jQuery(document).ready(function($) {
 				},
 				success: function() {
 					// Proceed with actual deactivation
-					//window.location.href = deactivateLink.href;
+					window.location.href = deactivateLink.href;
 				},
 				error: function() {
 					// Even on error, proceed with deactivation
-					//window.location.href = deactivateLink.href;
+					window.location.href = deactivateLink.href;
 				},
 			});
 		});
