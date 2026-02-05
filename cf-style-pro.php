@@ -39,6 +39,11 @@ class CF7_Visual_Styler_Pro {
 		add_action( 'admin_menu', array( $this, 'add_license_menu' ), 25 );
 		add_action( 'admin_menu', array( $this, 'add_pricing_menu' ), 26 );
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ), 27 );
+		
+		// Deactivation hook
+		// register_deactivation_hook( __FILE__, array( $this, 'on_deactivation' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_deactivation_scripts' ) );
+		add_action( 'wp_ajax_cf7_styler_pro_deactivation_reason', array( $this, 'handle_deactivation_reason' ) );
 	}
 
 	/**
@@ -301,6 +306,49 @@ class CF7_Visual_Styler_Pro {
 		);
 
 		return array_merge( $themes, $pro_themes );
+	}
+
+	/**
+	 * Enqueue deactivation scripts
+	 */
+	public function enqueue_deactivation_scripts() {
+		global $pagenow;
+		if ( 'plugins.php' === $pagenow ) {
+			wp_enqueue_script( 'cf7-styler-pro-deactivation', plugin_dir_url( __FILE__ ) . 'assets/js/deactivation.js', array( 'jquery' ), '1.0.0', true );
+			wp_localize_script( 'cf7-styler-pro-deactivation', 'cf7StylerProDeactivation', array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'cf7_styler_pro_deactivation_nonce' ),
+			) );
+		}
+	}
+
+	/**
+	 * Handle deactivation via plugin link
+	 */
+	public function on_deactivation() {
+		// Plugin will be deactivated after this function
+	}
+
+	/**
+	 * Handle deactivation reason submission
+	 */
+	public function handle_deactivation_reason() {
+		// check_ajax_referer( 'cf7_styler_pro_deactivation_nonce' );
+		// check_ajax_referer()
+
+		$reason = isset( $_POST['reason'] ) ? sanitize_text_field( $_POST['reason'] ) : 'unknown';
+		$details = isset( $_POST['details'] ) ? sanitize_text_field( $_POST['details'] ) : '';
+
+		// Store the deactivation reason
+		$reasons = get_option( 'cf7_styler_pro_deactivation_reasons', array() );
+		$reasons[] = array(
+			'reason'    => $reason,
+			'details'   => $details,
+			'timestamp' => current_time( 'mysql' ),
+		);
+		update_option( 'cf7_styler_pro_deactivation_reasons', $reasons );
+
+		wp_send_json_success( array( 'message' => 'Thank you for your feedback!' ) );
 	}
 
 	/**
